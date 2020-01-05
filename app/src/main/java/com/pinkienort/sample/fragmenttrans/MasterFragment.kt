@@ -12,10 +12,12 @@ import kotlinx.android.synthetic.main.fragment_master.*
 class MasterFragment : Fragment() {
 
     lateinit var switcher: FragmentSwitcher
+    lateinit var containerSwitcher: ContainerFragmentSwitcher
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         switcher = castFragmentSwitcher(context)
+        containerSwitcher = castContainerFragmentSwitcher(this)
     }
 
     override fun onCreateView(
@@ -34,7 +36,7 @@ class MasterFragment : Fragment() {
         title.text = arguments!!.getString("title")!!
         bottom.setOnClickListener {
             val fragment = DetailFragment.newInstance(arguments!!.getString("title")!!)
-            switcher.switchTo(fragment, title)
+            containerSwitcher.switchContainerTo(fragment, title)
         }
     }
 

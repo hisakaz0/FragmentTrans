@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.*
 import java.lang.ClassCastException
 
 interface FragmentSwitcher {
@@ -15,9 +17,30 @@ interface FragmentSwitcher {
 }
 
 @Throws(ClassCastException::class)
-fun castFragmentSwitcher(context: Context) : FragmentSwitcher {
+fun castFragmentSwitcher(context: Context?): FragmentSwitcher {
     return (context as? FragmentSwitcher)
-        ?: throw ClassCastException("${context::class} must impl ${FragmentSwitcher::class}")
+        ?: throw ClassCastException("$context must impl ${FragmentSwitcher::class}")
+}
+
+interface OnBackPressedListener {
+    fun onBackPressed(): Boolean
+}
+
+class SharedViewModel : ViewModel() {
+    val pagerAdapterPosition: MutableLiveData<Int> = MutableLiveData()
+
+    class Factory : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            return SharedViewModel() as T
+        }
+    }
+
+    companion object {
+        fun get(owner: ViewModelStoreOwner): SharedViewModel {
+            return ViewModelProvider(owner, Factory())[SharedViewModel::class.java]
+        }
+    }
 }
 
 class MainActivity : AppCompatActivity(), FragmentSwitcher {
@@ -26,10 +49,12 @@ class MainActivity : AppCompatActivity(), FragmentSwitcher {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        SharedViewModel.get(this)
+
         if (savedInstanceState == null) {
             supportFragmentManager
                 .beginTransaction()
-                .replace(R.id.container, PagerFragment.newInstance())
+                .replace(R.id.container, MainFragment.newInstance())
                 .commit()
         }
     }
@@ -57,5 +82,17 @@ class MainActivity : AppCompatActivity(), FragmentSwitcher {
 
     override fun goBack() {
         supportFragmentManager.popBackStack()
+    }
+
+    override fun onBackPressed() {
+        val current = supportFragmentManager.fragments.lastOrNull() ?: return super.onBackPressed()
+
+        var handled = false
+        if (current is OnBackPressedListener) {
+            handled = current.onBackPressed()
+        }
+        if (!handled) {
+            super.onBackPressed()
+        }
     }
 }

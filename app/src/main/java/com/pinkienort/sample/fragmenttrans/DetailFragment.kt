@@ -45,7 +45,7 @@ class DetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         title.text = titleText
         back_button.setOnClickListener {
-            switcher.goBack()
+            activity?.onBackPressed()
         }
         val drawable = when (titleText) {
             "Red" -> R.drawable.omuraisu
