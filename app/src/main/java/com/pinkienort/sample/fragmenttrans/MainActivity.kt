@@ -1,13 +1,23 @@
 package com.pinkienort.sample.fragmenttrans
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import java.lang.ClassCastException
 
 interface FragmentSwitcher {
-    fun swtichFragment(fragment: Fragment)
-    fun switchFragment(fragment: Fragment, sharedElements: Collection<View>?)
+    fun switchTo(fragment: Fragment)
+    fun switchTo(fragment: Fragment, sharedElement: View)
+    fun switchTo(fragment: Fragment, sharedElements: Collection<View>?)
+    fun goBack()
+}
+
+@Throws(ClassCastException::class)
+fun castFragmentSwitcher(context: Context) : FragmentSwitcher {
+    return (context as? FragmentSwitcher)
+        ?: throw ClassCastException("${context::class} must impl ${FragmentSwitcher::class}")
 }
 
 class MainActivity : AppCompatActivity(), FragmentSwitcher {
@@ -19,17 +29,20 @@ class MainActivity : AppCompatActivity(), FragmentSwitcher {
         if (savedInstanceState == null) {
             supportFragmentManager
                 .beginTransaction()
-                .replace(R.id.container, MasterFragment.newInstance())
-                .addToBackStack(null)
+                .replace(R.id.container, PagerFragment.newInstance())
                 .commit()
         }
     }
 
-    override fun swtichFragment(fragment: Fragment) {
-        switchFragment(fragment, null)
+    override fun switchTo(fragment: Fragment) {
+        switchTo(fragment, null)
     }
 
-    override fun switchFragment(fragment: Fragment, sharedElements: Collection<View>?) {
+    override fun switchTo(fragment: Fragment, sharedElement: View) {
+        switchTo(fragment, listOf(sharedElement))
+    }
+
+    override fun switchTo(fragment: Fragment, sharedElements: Collection<View>?) {
         supportFragmentManager
             .beginTransaction()
             .apply {
@@ -39,5 +52,10 @@ class MainActivity : AppCompatActivity(), FragmentSwitcher {
             }
             .replace(R.id.container, fragment)
             .addToBackStack(null)
+            .commit()
+    }
+
+    override fun goBack() {
+        supportFragmentManager.popBackStack()
     }
 }
